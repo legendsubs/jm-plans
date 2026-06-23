@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="JM Plans">
+<meta name="theme-color" content="#1A3C5E">
+<title>JM Weekly Plans</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F2F2F7; color: #1A1A1A; overscroll-behavior: none; }
+  .topbar { background: #1A3C5E; padding: env(safe-area-inset-top, 44px) 16px 0; position: sticky; top: 0; z-index: 100; }
+  .topbar-inner { padding: 12px 0 0; }
+  .topbar-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .topbar h1 { font-size: 18px; font-weight: 600; color: white; letter-spacing: -0.3px; }
+  .week-label { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+  .refresh-btn { background: rgba(255,255,255,0.18); border: none; border-radius: 16px; color: white; font-size: 12px; font-weight: 500; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-family: inherit; }
+  .refresh-btn svg { width: 13px; height: 13px; }
+  .tabs { display: flex; gap: 0; }
+  .tab { flex: 1; text-align: center; padding: 9px 4px 8px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.5); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .tab.active { color: white; border-bottom-color: white; }
+  .content { padding: 12px 12px 100px; max-width: 500px; margin: 0 auto; }
+  .card { background: white; border-radius: 14px; margin-bottom: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  .card-header { padding: 11px 14px; }
+  .card-header.north { background: #1A5E3A; }
+  .card-header.south { background: #7B1F1F; }
+  .card-header.issues { background: #7D3C00; }
+  .card-header.navy { background: #1A3C5E; }
+  .card-header h2 { font-size: 14px; font-weight: 600; color: white; }
+  .card-header .sub { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+  .card-header-row { display: flex; align-items: center; justify-content: space-between; }
+  .dm-chip { background: rgba(255,255,255,0.2); border-radius: 10px; padding: 3px 9px; font-size: 11px; color: white; font-weight: 500; }
+  .row { padding: 11px 14px; border-top: 0.5px solid #E5E5EA; }
+  .row-title { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+  .row-body { font-size: 13px; color: #555; line-height: 1.5; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+  .tag.north { background: #C8E6C9; color: #1A5E3A; }
+  .tag.south { background: #FFCDD2; color: #7B1F1F; }
+  .tag.warn { background: #FFF3CD; color: #856404; }
+  .goal { display: inline-block; background: #EBF4FB; color: #185FA5; font-size: 10px; font-weight: 600; padding: 3px 9px; border-radius: 10px; margin-top: 5px; }
+  .day-row { padding: 10px 14px; border-top: 0.5px solid #E5E5EA; }
+  .day-name { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #888; margin-bottom: 3px; }
+  .day-stores { font-size: 13px; font-weight: 600; color: #1A1A1A; margin-bottom: 3px; }
+  .day-focus { font-size: 13px; color: #555; line-height: 1.5; }
+  .notes-box { padding: 11px 14px; background: #F9F9FB; border-top: 0.5px solid #E5E5EA; font-size: 13px; color: #555; line-height: 1.6; }
+  .notes-box strong { color: #1A1A1A; font-weight: 600; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 10px 12px; }
+  .stat { background: #F2F2F7; border-radius: 10px; padding: 10px 12px; }
+  .stat-label { font-size: 11px; color: #888; margin-bottom: 3px; }
+  .stat-val { font-size: 22px; font-weight: 600; color: #1A1A1A; }
+  .alert { background: #FFF9C4; border: 0.5px solid #EDD14A; border-radius: 12px; padding: 10px 13px; margin-bottom: 10px; font-size: 13px; color: #7D3C00; line-height: 1.5; display: flex; gap: 9px; }
+  .alert svg { flex-shrink: 0; margin-top: 1px; }
+  .issue-row { display: flex; gap: 10px; padding: 10px 14px; border-top: 0.5px solid #E5E5EA; align-items: flex-start; }
+  .issue-store { font-size: 12px; font-weight: 700; color: #1A1A1A; min-width: 52px; padding-top: 1px; }
+  .issue-text { font-size: 13px; color: #555; line-height: 1.4; flex: 1; }
+  .hidden { display: none !important; }
+  .loading { text-align: center; padding: 40px 20px; color: #888; font-size: 14px; }
+  .spinner { width: 28px; height: 28px; border: 2.5px solid #E5E5EA; border-top-color: #1A3C5E; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #1A3C5E; color: white; font-size: 13px; font-weight: 500; padding: 10px 18px; border-radius: 20px; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 0.5px solid #E5E5EA; display: flex; padding-bottom: env(safe-area-inset-bottom, 0); z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 0 6px; cursor: pointer; gap: 3px; }
+  .nav-item svg { width: 24px; height: 24px; color: #C7C7CC; }
+  .nav-item.active svg { color: #1A3C5E; }
+  .nav-item span { font-size: 10px; color: #C7C7CC; font-weight: 500; }
+  .nav-item.active span { color: #1A3C5E; }
+  .connect-card { background: white; border-radius: 14px; padding: 20px; text-align: center; margin-bottom: 10px; }
+  .connect-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+  .connect-card p { font-size: 13px; color: #888; line-height: 1.5; margin-bottom: 16px; }
+  .connect-btn { background: #1A3C5E; color: white; border: none; border-radius: 12px; padding: 13px 24px; font-size: 15px; font-weight: 600; width: 100%; cursor: pointer; font-family: inherit; }
+  .step { display: flex; gap: 12px; padding: 10px 0; border-top: 0.5px solid #E5E5EA; text-align: left; }
+  .step-num { width: 26px; height: 26px; background: #1A3C5E; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .step-text { font-size: 13px; color: #555; line-height: 1.5; padding-top: 3px; }
+  .step-text strong { color: #1A1A1A; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="topbar-row">
+      <div>
+        <h1>Jersey Mike's Plans</h1>
+        <div class="week-label" id="week-label">Week of June 22 – 28, 2025</div>
+      </div>
+      <button class="refresh-btn" onclick="refreshData()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Refresh
+      </button>
+    </div>
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('summary',this)">Summary</div>
+      <div class="tab" onclick="switchTab('north',this)">North</div>
+      <div class="tab" onclick="switchTab('south',this)">South</div>
+      <div class="tab" onclick="switchTab('issues',this)">Issues</div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- SUMMARY -->
+  <div id="tab-summary">
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">North stores</div><div class="stat-val">4</div></div>
+      <div class="stat"><div class="stat-label">South stores</div><div class="stat-val">4</div></div>
+      <div class="stat"><div class="stat-label">Active MITs</div><div class="stat-val">3+</div></div>
+      <div class="stat"><div class="stat-label">Open issues</div><div class="stat-val">7</div></div>
+    </div>
+    <div class="alert">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span><strong>Heads up:</strong> Adam + Alex out 6/28. #16033 money monitoring ongoing. Zenput 2.0 rolling out this week.</span>
+    </div>
+    <div class="card">
+      <div class="card-header north">
+        <div class="card-header-row">
+          <div><div class="sub">North market</div><h2>Jacob Lunger's week</h2></div>
+          <div class="dm-chip">DM</div>
+        </div>
+      </div>
+      <div class="row"><div class="row-title">#37003 — Exeter <span class="tag north">Mon / Thu / Fri</span></div><div class="row-body">Kayden acclimating. Culture rebuild. New hire Matthew Moro starts Thu. 33 reports Fri.</div><div class="goal">New hire prep</div></div>
+      <div class="row"><div class="row-title">#37011 — Portsmouth <span class="tag north">Wed / Thu / Fri</span></div><div class="row-body">Training Lance at dinner. Grassroots with Aiden Quinn. Josh Doig schedule.</div><div class="goal">Developing next managers</div></div>
+      <div class="row"><div class="row-title">#37018 — Rochester <span class="tag north">Mon / Sat</span></div><div class="row-body">Tyler Lane meeting 3:30 Mon. Travis & Lance lunch Sat. 33 check-in.</div><div class="goal">MIT dev / organization</div></div>
+      <div class="row"><div class="row-title">#37015 — Epping <span class="tag north">Tue / Fri</span></div><div class="row-body">Devyne on line with Saylor. Training in other stores. 33 reports Fri.</div><div class="goal">Training the trainer</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header south">
+        <div class="card-header-row">
+          <div><div class="sub">South market</div><h2>Adam Stanneck's week</h2></div>
+          <div class="dm-chip">DM</div>
+        </div>
+      </div>
+      <div class="row"><div class="row-title">#16059 <span class="tag south">Mon / Tue</span></div><div class="row-body">Finalize 14 ft agenda. 33 reports Tue. Aiden 1-on-1 + SerSafe proctor setup.</div><div class="goal">Leader dev</div></div>
+      <div class="row"><div class="row-title">#16033 <span class="tag south">Mon / Tue</span></div><div class="row-body">Cleanliness & ops follow-ups. Systematize processes. Money monitoring ongoing.</div><div class="goal">Cleanliness / systems</div></div>
+      <div class="row"><div class="row-title">#37005 <span class="tag south">Wed / Thu</span></div><div class="row-body">Mid-shift delegation focus. Leaders + Bri best practices. 14ft plan. Print ServSafe.</div><div class="goal">Leadership & delegation</div></div>
+      <div class="row"><div class="row-title">#37008 <span class="tag south">Wed / Thu</span></div><div class="row-body">33 report Wed. Early planning for Dom's leadership transition back to school.</div><div class="goal">Leadership transition</div></div>
+    </div>
+  </div>
+
+  <!-- NORTH -->
+  <div id="tab-north" class="hidden">
+    <div class="card">
+      <div class="card-header north">
+        <div class="card-header-row">
+          <div><h2>Jacob Lunger — North</h2><div class="sub">(908) 319-9864</div></div>
+        </div>
+      </div>
+      <div class="day-row"><div class="day-name">Monday</div><div class="day-stores">#37003 Exeter + #37018 Rochester &nbsp;·&nbsp; 8:30–6:00</div><div class="day-focus">Kayden acclimating to Exeter — cleaning & refresh. Tyler Lane meeting 3:30 at Rochester. 33 check-in with Rudy & new hire.</div></div>
+      <div class="day-row"><div class="day-name">Tuesday</div><div class="day-stores">#37003 + #37015 Epping &nbsp;·&nbsp; 9:00–5:00</div><div class="day-focus">Devyne on 2nd shift with Saylor. 1-on-1 game plan & recap with Devyne. Building grassroots plan.</div></div>
+      <div class="day-row"><div class="day-name">Wednesday</div><div class="day-stores">#37011 Portsmouth &nbsp;·&nbsp; 2:00–8:00</div><div class="day-focus">Training Lance during dinner prep & close. Grassroots with Aiden Quinn. 1-on-1: roadmap for Phase 3 & growth.</div></div>
+      <div class="day-row"><div class="day-name">Thursday</div><div class="day-stores">#37003 + #37011 &nbsp;·&nbsp; 9:00–4:00</div><div class="day-focus">Matthew Moro starts at Exeter — roll out the red carpet. Helping Josh Doig with scheduling at Portsmouth.</div></div>
+      <div class="day-row"><div class="day-name">Friday</div><div class="day-stores">#37011, #37003, #37015 &nbsp;·&nbsp; 8:30–5:00</div><div class="day-focus">33 reports across all markets. Reviewing results with leaders. Identifying who wants to grow.</div></div>
+      <div class="day-row"><div class="day-name">Saturday</div><div class="day-stores">#37018 Rochester &nbsp;·&nbsp; 9:00–4:00</div><div class="day-focus">Travis & Lance during lunch. Lance MIT 1-on-1: training recap & goals. Travis: cleanliness & future planning.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header north"><h2>Jake's big picture</h2></div>
+      <div class="notes-box">Big week in the lab. <strong>MIT group planning</strong> + team growth strategy. Getting managers more hands-on in MIT development & recognition. Building structured <strong>grassroots plan</strong> for market connections. Will update on Lance's development throughout the week.</div>
+    </div>
+  </div>
+
+  <!-- SOUTH -->
+  <div id="tab-south" class="hidden">
+    <div class="card">
+      <div class="card-header south">
+        <div class="card-header-row">
+          <div><h2>Adam Stanneck — South</h2><div class="sub">(201) 874-4617</div></div>
+        </div>
+      </div>
+      <div class="day-row"><div class="day-name">Monday</div><div class="day-stores">#16059 + #16033 &nbsp;·&nbsp; 8:00–6:00</div><div class="day-focus">14 ft agenda at 16059. Aiden 1-on-1 — gauge what he's learning from Zack. Cleanliness + ops tweaks at 16033.</div></div>
+      <div class="day-row"><div class="day-name">Tuesday</div><div class="day-stores">#16059 + #16033 &nbsp;·&nbsp; 8:00–6:00</div><div class="day-focus">33 reports at both stores. Feedback session. Continue improvement in all areas.</div></div>
+      <div class="day-row"><div class="day-name">Wednesday</div><div class="day-stores">#37005 + #37008 &nbsp;·&nbsp; 8:00–6:00</div><div class="day-focus">Mid-shift delegation focus at 37005. Leaders + Bri best practices. 33 report at 37008. Plan 14ft for 37005.</div></div>
+      <div class="day-row"><div class="day-name">Thursday</div><div class="day-stores">#37005 + #37008 &nbsp;·&nbsp; 8:00–6:00</div><div class="day-focus">33 reports. Use feedback to target improvement areas. Dom transition planning for 37008.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header south"><h2>Adam's reminders</h2></div>
+      <div class="notes-box">
+        <span class="tag warn">Out 6/28</span> Adam + Alex both gone for the weekend.<br><br>
+        <strong>This week:</strong><br>
+        · Zenput closing checklist 2.0 rollout<br>
+        · #37005: Print ServSafe certifications<br>
+        · #16059: Aiden SerSafe proctor<br>
+        · Won't be on Gritsee call<br><br>
+        <strong>Long-term focus:</strong> Leadership at all levels across both markets.
+      </div>
+    </div>
+  </div>
+
+  <!-- ISSUES -->
+  <div id="tab-issues" class="hidden">
+    <div class="card">
+      <div class="card-header issues"><h2>Top store issues this week</h2></div>
+      <div class="issue-row"><div><div class="issue-store">#37003</div><span class="tag north">North</span></div><div class="issue-text">Rebuilding culture & staff — need adults</div></div>
+      <div class="issue-row"><div><div class="issue-store">#37011</div><span class="tag north">North</span></div><div class="issue-text">Needs adults / Organization / Communication</div></div>
+      <div class="issue-row"><div><div class="issue-store">#37018</div><span class="tag north">North</span></div><div class="issue-text">Leaders / More long-term adults / Cleaning & Organization</div></div>
+      <div class="issue-row"><div><div class="issue-store">#37015</div><span class="tag north">North</span></div><div class="issue-text">Organization / Planning / Consistency</div></div>
+      <div class="issue-row"><div><div class="issue-store">#16033</div><span class="tag south">South</span></div><div class="issue-text">Money theft monitoring — no new incidents, continuing daily counts</div></div>
+      <div class="issue-row"><div><div class="issue-store">#37005</div><span class="tag south">South</span></div><div class="issue-text">Leadership focus / Close consistency</div></div>
+      <div class="issue-row"><div><div class="issue-store">#16059</div><span class="tag south">South</span></div><div class="issue-text">Reliability / Attendance</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['summary','north','south','issues'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function refreshData() {
+  showToast('Checking for new emails...');
+  setTimeout(() => showToast('Up to date — last updated Sunday 7:01 PM'), 1500);
+}
+
+const now = new Date();
+const day = now.getDay();
+const monday = new Date(now);
+monday.setDate(now.getDate() - ((day + 6) % 7));
+const sunday = new Date(monday);
+sunday.setDate(monday.getDate() + 6);
+const fmt = d => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+document.getElementById('week-label').textContent = `Week of ${fmt(monday)} – ${fmt(sunday)}, ${sunday.getFullYear()}`;
+</script>
+</body>
+</html>
